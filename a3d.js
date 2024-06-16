@@ -23,7 +23,7 @@ document.getElementById("playerStatus").style.display = "flex";
 const keysPressed = {};
 document.addEventListener('keydown', (event) => keysPressed[event.key] = true);
 document.addEventListener('keyup', (event) => keysPressed[event.key] = false);
-let playerModel, pmUrl = "a-tri.obj";
+let playerModel, pmUrl = "models/a-tri.obj";
 
 // Add event listeners for gamepad connection and disconnection
 window.addEventListener('gamepadconnected', (event) => {
@@ -60,11 +60,14 @@ window.addEventListener('gamepaddisconnected', (event) => {
 });
 
 let shootingSound, explosionSound, warpSound, readySound;
-loadSound('ready.mp3').then(buffer => readySound = buffer);
-loadSound('laser.mp3').then(buffer => shootingSound = buffer);
-loadSound('explosion.mp3').then(buffer => explosionSound = buffer);
-loadSound('warp.mp3').then(buffer => warpSound = buffer);
+loadSound('sounds/ready.mp3').then(buffer => readySound = buffer);
+loadSound('sounds/laser.mp3').then(buffer => shootingSound = buffer);
+loadSound('sounds/explosion.mp3').then(buffer => explosionSound = buffer);
+loadSound('sounds/warp.mp3').then(buffer => warpSound = buffer);
 
+/**
+ * Resets the player ready panel to default state and updates high scores.
+ */
 function resetReadyPanel() {
     let i = -1;
     let statusPanels = document.getElementById('playerStatus')
@@ -87,17 +90,28 @@ function resetReadyPanel() {
     });
 }
 
-// Function to update the player's score display
-function updatePlayerScoreDisplay(index, count) {
-    document.getElementById('player' + index + 'Score').innerText = 'P' + (index + 1) + ' Score: ' + count;
+/**
+ * Updates the player's score display based on the provided index and count.
+ * @param {number} index - The index of the player.
+ * @param {number} score - The score count to update.
+ */
+function updatePlayerScoreDisplay(index, score) {
+    document.getElementById('player' + index + 'Score').innerText = 'P' + (index + 1) + ' Score: ' + score;
 }
 
-function updatePlayerLivesDisplay(index, count) {
+/**
+ * Updates the player's lives display based on the provided index and count.
+ * @param {number} index - The index of the player.
+ */
+function updatePlayerLivesDisplay(index) {
     let ll = players.get(index).lives;
     let ld = ll <= 0 ? 0 : ll - 1;
     document.getElementById('player' + index + 'Lives').innerText = 'P' + (index + 1) + ' Lives: ' + ld;
 }
 
+/**
+ * Checks if the game music has finished playing, and if so, restarts it.
+ */
 function checkMusic() {
     let totalTime = document.querySelector("body > midi-player").shadowRoot
         .querySelector("div > div:nth-child(2) > span.total-time").innerText;
@@ -109,10 +123,13 @@ function checkMusic() {
     }
 }
 
+/**
+ * Game loop that handles start and end screen updates.
+ */
 function screenLoop() {
-    const delta = clock.getDelta();
-    handleGamepadInput(delta);
-    updateKBPlayer(delta);
+    const d = clock.getDelta();
+    handleGamepadInput(d);
+    updateKBPlayer(d);
     if (!startScreen && !endScreen) {
         checkMusic();
         return;
@@ -139,12 +156,21 @@ window.onload = () => {
         });
 };
 
+/**
+ * Loads a sound from the specified URL and decodes it into an AudioBuffer.
+ * @param {string} url - The URL of the sound file.
+ * @returns {Promise<AudioBuffer>} - A promise that resolves to the decoded audio buffer.
+ */
 function loadSound(url) {
     return fetch(url)
         .then(response => response.arrayBuffer())
         .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer));
 }
 
+/**
+ * Plays the provided sound buffer.
+ * @param {AudioBuffer} buffer - The audio buffer to play.
+ */
 function playSound(buffer) {
     const source = audioContext.createBufferSource();
     source.buffer = buffer;
@@ -152,6 +178,9 @@ function playSound(buffer) {
     source.start();
 }
 
+/**
+ * Starts the game, hiding the start screen and initiating game functions.
+ */
 function startGame() {
     document.getElementById('startScreen').style.display = 'none';
     if (startScreen) {
@@ -161,6 +190,9 @@ function startGame() {
     init();
 }
 
+/**
+ * Restarts the game, resetting all relevant parameters and settings.
+ */
 function restartGame() {
     document.getElementById('gameOverScreen').style.display = 'none';
     level = 1;
@@ -177,6 +209,9 @@ function restartGame() {
     init();
 }
 
+/**
+ * Initializes the game, setting up the scene, players, and other components.
+ */
 function init() {
     document.getElementById("debug").style.display = debugMode ? "flex" : "none";
     document.getElementById("playerStatus").style.display = "none";
@@ -206,7 +241,7 @@ function init() {
         }
     });
     // Create and spawn saucers
-    Saucer.spawnRandomly(scene, pickRandomPlayer(), 'saucer.obj');
+    Saucer.spawnRandomly(scene, pickRandomPlayer(), 'models/saucer.obj');
 
     setupStarField();
     setupLighting();
@@ -217,6 +252,9 @@ function init() {
     animate();
 }
 
+/**
+ * Sets up the game camera with orthographic projection.
+ */
 function setupCamera() {
     const aspectRatio = window.innerWidth / window.innerHeight;
     const viewSize = 20;
@@ -227,6 +265,9 @@ function setupCamera() {
     camera.position.z = 50;
 }
 
+/**
+ * Configures the renderer and appends it to the document body.
+ */
 function setupRenderer() {
     if (!renderer) {
         renderer = new THREE.WebGLRenderer({
@@ -237,6 +278,11 @@ function setupRenderer() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+/**
+ * Generates a sequence of points in a spiral order.
+ * @param {number} n - The number of points to generate.
+ * @returns {Array<Array<number>>} - An array of [x, y] points.
+ */
 function generateSpiralSequence(n) {
     let direction = 0;
     let steps = 1;
@@ -274,6 +320,9 @@ function generateSpiralSequence(n) {
     return sequence;
 }
 
+/**
+ * Sets up the star field in the game scene.
+ */
 function setupStarField() {
     const starsGeometry = new THREE.BufferGeometry();
     const starsCount = 1000;
@@ -314,12 +363,18 @@ void main() {
     scene.add(starField);
 }
 
+/**
+ * Configures the lighting in the game scene.
+ */
 function setupLighting() {
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(0, 1, 5);
     scene.add(light);
 }
 
+/**
+ * Sets up asteroids in the game scene.
+ */
 function setupAsteroids() {
     asteroidGroup = new THREE.Group();
     particlesGroup = new THREE.Group();
@@ -328,16 +383,25 @@ function setupAsteroids() {
     addAsteroids(3, level + 2);
 }
 
+/**
+ * Sets up event listeners for window resize and other events.
+ */
 function setupEventListeners() {
     window.addEventListener('resize', onWindowResize, false);
 }
 
+/**
+ * Handles window resize events, adjusting camera and renderer settings.
+ */
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+/**
+ * Updates the score display for the player and additional players.
+ */
 function updateScoreDisplay() {
     document.getElementById('playerScore').innerText = 'Score: ' + player.score;
     players.forEach((player, key) => {
@@ -345,15 +409,25 @@ function updateScoreDisplay() {
     });
 }
 
+/**
+ * Updates the lives display for the player and additional players.
+ */
 function updateLivesDisplay() {
     let ld = player.lives <= 0 ? 0 : player.lives - 1;
     document.getElementById('playerLives').innerText = 'Lives left: ' + ld;
     players.forEach((p, key) => {
-        updatePlayerLivesDisplay(key, p.lives);
+        updatePlayerLivesDisplay(key);
     });
 }
 
-function addAsteroids(size, number, position) {
+/**
+ * Adds asteroids to the game scene.
+ * @param {number} size - The size of the asteroids.
+ * @param {number} number - The number of asteroids to add.
+ * @param {THREE.Vector3} [pos] - The position to place the asteroids.
+ * @returns {Array<THREE.Mesh>} - An array of new asteroids.
+ */
+function addAsteroids(size, number, pos) {
     const newAsteroids = [];
     const material = new THREE.MeshLambertMaterial({
         color: 0x8B4513
@@ -362,7 +436,7 @@ function addAsteroids(size, number, position) {
         const geometry = getAsteroidGeometry(size);
         const asteroid = new THREE.Mesh(geometry, material);
 
-        setPosition(asteroid, position);
+        setPosition(asteroid, pos);
         setVelocity(asteroid);
         setRotation(asteroid);
 
@@ -373,6 +447,11 @@ function addAsteroids(size, number, position) {
     return newAsteroids;
 }
 
+/**
+ * Gets the geometry for an asteroid of a specified size.
+ * @param {number} size - The size of the asteroid.
+ * @returns {THREE.DodecahedronBufferGeometry} - The geometry of the asteroid.
+ */
 function getAsteroidGeometry(size) {
     switch (size) {
         case 3:
@@ -384,48 +463,66 @@ function getAsteroidGeometry(size) {
     }
 }
 
-function setPosition(asteroid, position) {
-    if (!position) {
+/**
+ * Sets the position of an asteroid.
+ * @param {THREE.Mesh} as - The asteroid to position.
+ * @param {THREE.Vector3} [pos] - The position to set.
+ */
+function setPosition(as, pos) {
+    if (!pos) {
         const edge = Math.floor(Math.random() * 4);
         const pos = Math.random() * 20 - 10;
         switch (edge) {
             case 0:
-                asteroid.position.set(pos, 10, 0);
+                as.position.set(pos, 10, 0);
                 break;
             case 1:
-                asteroid.position.set(10, pos, 0);
+                as.position.set(10, pos, 0);
                 break;
             case 2:
-                asteroid.position.set(pos, -10, 0);
+                as.position.set(pos, -10, 0);
                 break;
             case 3:
-                asteroid.position.set(-10, pos, 0);
+                as.position.set(-10, pos, 0);
                 break;
         }
     } else {
-        asteroid.position.x = position.x + (Math.random() - 0.5) * 2;
-        asteroid.position.y = position.y + (Math.random() - 0.5) * 2;
+        as.position.x = pos.x + (Math.random() - 0.5) * 2;
+        as.position.y = pos.y + (Math.random() - 0.5) * 2;
     }
 }
 
-function setVelocity(asteroid) {
-    asteroid.velocity = new THREE.Vector3(
+/**
+ * Sets the velocity of an asteroid.
+ * @param {THREE.Mesh} a - The asteroid to set velocity for.
+ */
+function setVelocity(a) {
+    a.velocity = new THREE.Vector3(
         (Math.random() - 0.5) * 0.1,
         (Math.random() - 0.5) * 0.1,
         0);
 }
 
-function setRotation(asteroid) {
+/**
+ * Sets the rotation of an asteroid.
+ * @param {THREE.Mesh} as - The asteroid to set rotation for.
+ */
+function setRotation(as) {
     const upVector = new THREE.Vector3(0, 0, 1);
-    asteroid.rotationAxis = new THREE.Vector3().crossVectors(asteroid.velocity, upVector).normalize();
-    asteroid.rotationSpeedMagnitude = asteroid.velocity.length() * 0.05;
-    asteroid.rotationSpeed = {
+    as.rotationAxis = new THREE.Vector3().crossVectors(as.velocity, upVector).normalize();
+    as.rotationSpeedMagnitude = as.velocity.length() * 0.05;
+    as.rotationSpeed = {
         x: (Math.random() < 0.5 ? 1 : -1) * (Math.random() * 0.05 + 0.5), // Random rotation along the x-axis
         y: (Math.random() < 0.5 ? 1 : -1) * (Math.random() * 0.05 + 0.5), // Random rotation along the y-axis
         z: 0, // Consistent spin in one direction along the z-axis
     };
 }
 
+/**
+ * Updates the score for a specified player.
+ * @param {number} value - The score value to add.
+ * @param {Object} owner - The player object to update.
+ */
 function updateScore(value, owner) {
     owner.score += scoreMapping[value] || 0;
     if (owner.score >= (10000 * (owner.livesGranted + 1))) {
@@ -438,25 +535,30 @@ function updateScore(value, owner) {
     updateLivesDisplay();
 }
 
-function explodeAsteroid(asteroid, owner) {
+/**
+ * Causes an asteroid to explode, creating smaller asteroids if applicable.
+ * @param {THREE.Mesh} as - The asteroid to explode.
+ * @param {Object} owner - The player responsible for the explosion.
+ */
+function explodeAsteroid(as, owner) {
     const velocityIncreaseFactor = 1.6;
 
-    updateScore(asteroid.size, owner);
+    updateScore(as.size, owner);
 
-    if (asteroid.size > 1) {
-        const newSize = asteroid.size - 1;
-        const newAsteroids = addAsteroids(newSize, 2, asteroid.position);
+    if (as.size > 1) {
+        const newSize = as.size - 1;
+        const newAsteroids = addAsteroids(newSize, 2, as.position);
         newAsteroids.forEach(newAsteroid => {
             newAsteroid.velocity.multiplyScalar(velocityIncreaseFactor);
         });
     }
-    createNewParticles(asteroid.position, asteroid.size, partyMode);
-    asteroidGroup.remove(asteroid);
+    createNewParticles(as.position, as.size, partyMode);
+    asteroidGroup.remove(as);
     playSound(explosionSound);
 
     // Create a point light at the asteroid's position
     const explosionLight = new THREE.PointLight(0xffffff, 5, 20); // white light, intensity 1, distance 10
-    explosionLight.position.copy(asteroid.position);
+    explosionLight.position.copy(as.position);
     scene.add(explosionLight);
 
     // Make the light fade out and remove it after a short duration
@@ -474,6 +576,11 @@ function explodeAsteroid(asteroid, owner) {
     requestAnimationFrame(fadeStep);
 }
 
+/**
+ * Creates a player mesh based on the provided colour.
+ * @param {number} color - The colour of the player mesh.
+ * @returns {THREE.Mesh} - The created player mesh.
+ */
 function createPlayerMesh(color) {
     const model = playerModel ?
         playerModel.children[0].geometry.clone().scale(0.05, 0.05, 0.05).clone() :
@@ -483,7 +590,11 @@ function createPlayerMesh(color) {
     }))
 }
 
-function createThrustTrail(pl) {
+/**
+ * Creates a thrust trail behind a player.
+ * @param {Player} p - The player object to create thrust trail for.
+ */
+function createThrustTrail(p) {
     const particleCount = 3; // Number of particles to create for each thrust, adjust as needed
     const geometry = new THREE.SphereGeometry(0.05, 6, 6); // Smaller geometry for particles
     const material = new THREE.MeshBasicMaterial({
@@ -495,9 +606,9 @@ function createThrustTrail(pl) {
 
         // Position the particles at the base of the cone
         let offset = new THREE.Vector3(0, -0.75, 0); // Adjust the offset as needed
-        offset.applyQuaternion(pl.playerMesh.quaternion);
-        particle.position.set(pl.playerMesh.position.x + offset.x,
-            pl.playerMesh.position.y + offset.y, 0);
+        offset.applyQuaternion(p.playerMesh.quaternion);
+        particle.position.set(p.playerMesh.position.x + offset.x,
+            p.playerMesh.position.y + offset.y, 0);
 
         // Give the particles an initial velocity with reduced spread
         let velocity = new THREE.Vector3(
@@ -505,7 +616,7 @@ function createThrustTrail(pl) {
             -0.5 - Math.random() * 0.1, // Make y component more consistent and downward
             0 // Reduce the randomness in z component
         ); //.normalize().multiplyScalar(0.5); // Adjust the scalar as needed
-        velocity.applyQuaternion(pl.playerMesh.quaternion);
+        velocity.applyQuaternion(p.playerMesh.quaternion);
 
         particle.life = 0.5; // Particle lifetime in seconds
         particle.velocity = velocity; // Set particle velocity and lifetime
@@ -516,8 +627,8 @@ function createThrustTrail(pl) {
 
     const offset = new THREE.Vector3(0, -0.75, 0);
     const thrustLight = new THREE.PointLight(0xff6600, 1, 5);
-    thrustLight.position.set(pl.playerMesh.position.x + offset.x,
-        pl.playerMesh.position.y + offset.y,
+    thrustLight.position.set(p.playerMesh.position.x + offset.x,
+        p.playerMesh.position.y + offset.y,
         0);
     thrustLight.life = 0.3; // Set light life to 300ms
 
@@ -525,9 +636,13 @@ function createThrustTrail(pl) {
     thrustLights.push(thrustLight);
 }
 
-function updateThrustLights(deltaTime) {
+/**
+ * Updates the thrust lights over time, removing expired lights.
+ * @param {number} d - The time elapsed since the last frame.
+ */
+function updateThrustLights(d) {
     thrustLights = thrustLights.filter((light) => {
-        light.life -= deltaTime;
+        light.life -= d;
         if (light.life <= 0) {
             scene.remove(light);
             return false;
@@ -536,20 +651,24 @@ function updateThrustLights(deltaTime) {
     });
 }
 
-function shoot(cPlayer) {
+/**
+ * Shoots a bullet from the player's position.
+ * @param {Player} p - The player object that shoots.
+ */
+function shoot(p) {
     // Check if there are already 3 bullets, exit if so
-    if (cPlayer !== null) {
-        if (cPlayer.bullets.length >= 3) {
+    if (p !== null) {
+        if (p.bullets.length >= 3) {
             return;
         }
     }
 
-    if (cPlayer === null || cPlayer === undefined) {
+    if (p === null || p === undefined) {
         console.error("shoot() got NULL player")
     }
 
     // Get the elapsed time since the last shot
-    const elapsedTime = cPlayer.shotClock.getElapsedTime();
+    const elapsedTime = p.shotClock.getElapsedTime();
 
     // Check if enough time has passed since the last shot
     if (elapsedTime < shotDelay) {
@@ -557,7 +676,7 @@ function shoot(cPlayer) {
     }
 
     // Reset the clock for the next shot
-    cPlayer.shotClock.start();
+    p.shotClock.start();
 
     const bulletMesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.1, 8, 8),
@@ -565,13 +684,13 @@ function shoot(cPlayer) {
             color: 0xff0000
         }));
     let offset = new THREE.Vector3(0, 1, 0);
-    offset.applyQuaternion(cPlayer.playerMesh.quaternion);
-    bulletMesh.position.set(cPlayer.playerMesh.position.x + offset.x,
-        cPlayer.playerMesh.position.y + offset.y,
-        cPlayer.playerMesh.position.z + offset.z);
+    offset.applyQuaternion(p.playerMesh.quaternion);
+    bulletMesh.position.set(p.playerMesh.position.x + offset.x,
+        p.playerMesh.position.y + offset.y,
+        p.playerMesh.position.z + offset.z);
 
     let velocity = new THREE.Vector3(0, 0.5, 0);
-    velocity.applyQuaternion(cPlayer.playerMesh.quaternion);
+    velocity.applyQuaternion(p.playerMesh.quaternion);
     bulletMesh.velocity = velocity;
 
     // Create a point light and attach it to the bullet
@@ -579,7 +698,7 @@ function shoot(cPlayer) {
     bulletLight.position.set(bulletMesh.position.x, bulletMesh.position.y, bulletMesh.position.z);
 
     bulletMesh.add(bulletLight); // Attach the light to the bullet
-    cPlayer.bullets.push({
+    p.bullets.push({
         mesh: bulletMesh,
         light: bulletLight,
         life: 0.38
@@ -590,6 +709,10 @@ function shoot(cPlayer) {
     playSound(shootingSound);
 }
 
+/**
+ * Processes and updates the high scores and local storage.
+ * @returns {string} - The formatted high score display string.
+ */
 function processHighScores() {
     let hsMap = new Map();
     let ls = localStorage.getItem("playerKBScore");
@@ -640,6 +763,9 @@ function processHighScores() {
     return fs;
 }
 
+/**
+ * Ends the game and displays the game over screen.
+ */
 function endGame() {
     // Check if any player still has lives left
     const isAnyPlayerAlive = Array.from(players.values()).some(p => p.lives > 0);
@@ -670,7 +796,14 @@ function endGame() {
     requestAnimationFrame(screenLoop);
 }
 
-function checkAsteroidCollision(asteroid, asteroidRadius, p) {
+/**
+ * Checks if a player collides with an asteroid.
+ * @param {THREE.Mesh} asteroid - The asteroid to check collision with.
+ * @param {number} rad - The radius of the asteroid.
+ * @param {Object} p - The player object to check collision for.
+ * @returns {boolean} - True if there is a collision, false otherwise.
+ */
+function checkAsteroidCollision(asteroid, rad, p) {
     if (p === null || p === player) {
         p = player;
     }
@@ -678,39 +811,17 @@ function checkAsteroidCollision(asteroid, asteroidRadius, p) {
         return false;
     const playerRadius = p.playerMesh.geometry.boundingSphere.radius || 0;
 
-    if (p.playerMesh.position.distanceTo(asteroid.position) < asteroidRadius + playerRadius) {
+    if (p.playerMesh.position.distanceTo(asteroid.position) < rad + playerRadius) {
         if (!p.isInvulnerable && p.ready) {
-            p.lives--;
-            updateLivesDisplay();
-            explodeAsteroid(asteroid, p);
-            try {
-                const gamepad = navigator.getGamepads()[p.gamepadIndex];
-                gamepad.vibrationActuator.playEffect("dual-rumble", {
-                    startDelay: 0,
-                    duration: 200,
-                    weakMagnitude: 1.0,
-                    strongMagnitude: 1.0,
-                });
-            } catch (e) {
-                /* probable error */
-            }
-
-            if (p.lives <= 0) {
-                endGame();
-            } else {
-                p.isInvulnerable = true;
-                p.invulnerablePhase.reset();
-                createNewParticles(p.playerMesh.position, 3, partyMode);
-                p.playerMesh.position.set(0, 0, 0);
-                p.playerMesh.material.color.set(0xFFD700); // Gold color
-                p.velocity.set(0, 0, 0);
-            }
+            return true;
         }
-        return true;
     }
     return false;
 }
 
+/**
+ * Checks for collisions between players and asteroids.
+ */
 function checkPlayerAsteroidCollisions() {
     asteroidGroup.children.forEach((asteroid) => {
         if (asteroid.geometry.boundingSphere === null) {
@@ -721,28 +832,76 @@ function checkPlayerAsteroidCollisions() {
             //player.geometry.computeBoundingSphere();
             return;
         }
-
         const asteroidRadius = asteroid.geometry.boundingSphere.radius;
+        let collisionBuffer = [];
+
         let status = checkAsteroidCollision(asteroid, asteroidRadius, player);
-        if (!status) {
-            for (let [key, playerData] of players) {
-                let status = checkAsteroidCollision(asteroid, asteroidRadius, playerData);
-                if (status)
-                    break;
+        if (status) {
+            collisionBuffer.push(player);
+        }
+
+        for (let [key, playerData] of players) {
+            let status = checkAsteroidCollision(asteroid, asteroidRadius, playerData);
+            if (status) {
+                collisionBuffer.push(playerData);
             }
+        }
+
+        if (collisionBuffer.length > 0) {
+            let randomIndex = Math.floor(Math.random() * collisionBuffer.length);
+            destroyPlayer(collisionBuffer[randomIndex], asteroid);
         }
     });
     document.getElementById('dbgInvul').innerText = 'Invulnerable time: ' + player.invulnerableTimePassed;
 }
 
+/**
+ * Destroys the player and handles their life count and respawn.
+ * @param {Object} p - The player object to destroy.
+ * @param {THREE.Mesh} as - The asteroid that collides with the player.
+ */
+function destroyPlayer(p, as) {
+    p.lives--;
+    updateLivesDisplay();
+    explodeAsteroid(as, p);
+    try {
+        const gamepad = navigator.getGamepads()[p.gamepadIndex];
+        gamepad.vibrationActuator.playEffect("dual-rumble", {
+            startDelay: 0,
+            duration: 200,
+            weakMagnitude: 1.0,
+            strongMagnitude: 1.0,
+        });
+    } catch (e) {
+        /* probable error */
+    }
+
+    if (p.lives <= 0) {
+        endGame();
+    } else {
+        p.isInvulnerable = true;
+        p.invulnerablePhase.reset();
+        createNewParticles(p.playerMesh.position, 3, partyMode);
+        p.playerMesh.position.set(0, 0, 0);
+        p.playerMesh.material.color.set(0xFFD700); // Gold color
+        p.velocity.set(0, 0, 0);
+    }
+}
+
+/**
+ * Checks if all asteroids have been cleared; if so, advances the level.
+ */
 function checkAsteroidsCleared() {
     if (asteroidGroup.children.length === 0) {
         level++;
         addAsteroids(3, level + 3);
-        Saucer.spawnRandomly(scene, pickRandomPlayer(), 'saucer.obj');
+        Saucer.spawnRandomly(scene, pickRandomPlayer(), 'models/saucer.obj');
     }
 }
 
+/**
+ * Checks for collisions between bullets and asteroids.
+ */
 function checkBulletAsteroidCollisions() {
     function filterBullets(bullet, owner) {
         let hit = false;
@@ -772,7 +931,10 @@ function checkBulletAsteroidCollisions() {
     updateScoreDisplay();
 }
 
-// Function to pick a random player
+/**
+ * Picks a random player from the game.
+ * @returns {Player} - The randomly selected player.
+ */
 function pickRandomPlayer() {
     // Combine the player object with the values from the Map
     const allPlayers = [player, ...players.values().filter(player => player.ready === true)];
@@ -789,25 +951,37 @@ function pickRandomPlayer() {
     return allPlayers[randomIndex];
 }
 
+/**
+ * Freezes the movement of all asteroids in the game.
+ */
 function freezeAsteroids() {
     asteroidGroup.children.forEach((asteroid) => {
         asteroid.velocity.set(0, 0, 0);
     });
 }
 
-function checkParticleAsteroidCollisions(particle) {
+/**
+ * Checks for collisions between particles and asteroids and alters the asteroid's course.
+ * @param {Object} ptl - The particle to check collision for.
+ */
+function checkParticleAsteroidCollisions(ptl) {
     asteroidGroup.children.forEach((asteroid) => {
         if (asteroid.geometry.boundingSphere === null) {
             asteroid.geometry.computeBoundingSphere();
         }
         const asteroidRadius = asteroid.geometry.boundingSphere.radius;
 
-        if (particle.position.distanceTo(asteroid.position) < asteroidRadius) {
-            alterAsteroidCourse(asteroid, particle.velocity);
+        if (ptl.position.distanceTo(asteroid.position) < asteroidRadius) {
+            alterAsteroidCourse(asteroid, ptl.velocity);
         }
     });
 }
 
+/**
+ * Alters the course of an asteroid with a given force.
+ * @param {THREE.Mesh} asteroid - The asteroid to alter.
+ * @param {THREE.Vector3} force - The force to apply.
+ */
 function alterAsteroidCourse(asteroid, force) {
     if (!asteroid.velocity) {
         asteroid.velocity = new THREE.Vector3();
@@ -815,10 +989,14 @@ function alterAsteroidCourse(asteroid, force) {
     asteroid.velocity.add(force.clone().multiplyScalar(0.001));
 }
 
-function updateBullets(deltaTime) {
+/**
+ * Updates the positions and states of all bullets.
+ * @param {number} d - The time elapsed since the last frame.
+ */
+function updateBullets(d) {
     // private function to check bullets
     function checkBullets(bullet, index, bulletsArray) {
-        bullet.life -= deltaTime;
+        bullet.life -= d;
 
         if (bullet.life <= 0) {
             scene.remove(bullet.mesh);
@@ -843,12 +1021,20 @@ function updateBullets(deltaTime) {
     });
 }
 
-function wrapPosition(object) {
-    object.position.x = THREE.MathUtils.euclideanModulo(object.position.x + 10, 20) - 10;
-    object.position.y = THREE.MathUtils.euclideanModulo(object.position.y + 10, 20) - 10;
+/**
+ * Wraps the position of an object within the game field boundaries.
+ * @param {THREE.Object3D} obj - The object to wrap position for.
+ */
+function wrapPosition(obj) {
+    obj.position.x = THREE.MathUtils.euclideanModulo(obj.position.x + 10, 20) - 10;
+    obj.position.y = THREE.MathUtils.euclideanModulo(obj.position.y + 10, 20) - 10;
 }
 
-function warpPlayer(pl) {
+/**
+ * Warps the player to a random position within the play field bounds.
+ * @param {Player} p - The player object to warp.
+ */
+function warpPlayer(p) {
     const playFieldBounds = {
         xMin: -8,
         xMax: 8,
@@ -859,9 +1045,9 @@ function warpPlayer(pl) {
     const randomX = Math.random() * (playFieldBounds.xMax - playFieldBounds.xMin) + playFieldBounds.xMin;
     const randomY = Math.random() * (playFieldBounds.yMax - playFieldBounds.yMin) + playFieldBounds.yMin;
 
-    if (pl.gamepadIndex !== null) {
+    if (p.gamepadIndex !== null) {
         players.forEach((p) => {
-            if (pl === p) {
+            if (p === p) {
                 p.playerMesh.position.set(randomX, randomY, 0);
                 p.warpDelay = 0;
             }
@@ -873,39 +1059,46 @@ function warpPlayer(pl) {
     playSound(warpSound);
 }
 
-function updateAsteroids(deltaTime) {
+/**
+ * Updates the positions and rotations of all asteroids.
+ * @param {number} delta - The time elapsed since the last frame.
+ */
+function updateAsteroids(delta) {
     asteroidGroup.children.forEach((asteroid) => {
         asteroid.position.add(asteroid.velocity);
         wrapPosition(asteroid);
-        asteroid.rotation.x += asteroid.rotationSpeed.x * deltaTime;
-        asteroid.rotation.y += asteroid.rotationSpeed.y * deltaTime;
-        asteroid.rotation.z += asteroid.rotationSpeed.z * deltaTime;
+        asteroid.rotation.x += asteroid.rotationSpeed.x * delta;
+        asteroid.rotation.y += asteroid.rotationSpeed.y * delta;
+        asteroid.rotation.z += asteroid.rotationSpeed.z * delta;
     });
 }
 
+/**
+ * Main animation loop that updates game elements and renders the scene.
+ */
 function animate() {
     if (endScreen) return;
-    const deltaTime = clock.getDelta(); // Time since last frame
+    const d = clock.getDelta(); // Time since last frame
 
-    document.getElementById("fps").innerText = "FPS:" + Math.floor(1 / deltaTime);
-    starField.material.uniforms.time.value += deltaTime;
+    document.getElementById("fps").innerText = "FPS:" + Math.floor(1 / d);
+    starField.material.uniforms.time.value += d;
 
     // Update saucer position
     if (saucer) {
-        saucer.bullets.forEach(bullet => bullet.update(deltaTime));
-        saucer.update(deltaTime, clock.getElapsedTime() * 1000);
+        saucer.bullets.forEach(bullet => bullet.update(d));
+        saucer.update(d, clock.getElapsedTime() * 1000);
     }
 
     //players.forEach(p => {}); // template
-    handleGamepadInput(deltaTime);
-    updateAsteroids(deltaTime);
-    updateBullets(deltaTime);
-    updateParticles(deltaTime);
-    updateThrustLights(deltaTime);
+    handleGamepadInput(d);
+    updateAsteroids(d);
+    updateBullets(d);
+    updateParticles(d);
+    updateThrustLights(d);
     checkBulletAsteroidCollisions();
     checkPlayerAsteroidCollisions();
     checkAsteroidsCleared();
-    updateKBPlayer(deltaTime);
+    updateKBPlayer(d);
     checkMusic();
 
     renderer.render(scene, camera);

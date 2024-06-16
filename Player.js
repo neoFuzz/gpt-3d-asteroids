@@ -1,6 +1,12 @@
-// TODO: fix layering issue. where players explode 1 through 4, player 4 can never die.
-// implement analogue stick control
+/**
+ * Class representing a Player.
+ */
 class Player {
+    /**
+     * Create a player.
+     * @param {THREE.Color} color - The color of the player.
+     * @param {number} gamepadIndex - The index of the gamepad associated with the player.
+     */
     constructor(color, gamepadIndex) {
         this.color = color;
         this.gamepadIndex = gamepadIndex;
@@ -21,38 +27,44 @@ class Player {
     }
 }
 
-function setupPlayer(pl) {
+/**
+ * Set up a player for the game.
+ * @param {Player} p - The player to set up.
+ */
+function setupPlayer(p) {
     const sequence = generateSpiralSequence(12);
-    if (pl !== null) {
-        if (!pl.ready) {
-            const plstring = "player" + (pl.gamepadIndex === null ? "" : pl.gamepadIndex);
+    if (p !== null) {
+        if (!p.ready) {
+            const plstring = "player" + (p.gamepadIndex === null ? "" : p.gamepadIndex);
             document.getElementById(plstring + "Score").style.display = "none";
             document.getElementById(plstring + "Lives").style.display = "none";
             return;
         }
-        let playerIndex = players.get(pl.gamepadIndex);
+        let playerIndex = players.get(p.gamepadIndex);
 
-        if (playerIndex === undefined && pl.gamepadIndex !== null) {
-            console.log(`Player ${pl.gamepadIndex} missing`);
+        if (playerIndex === undefined && p.gamepadIndex !== null) {
+            console.log(`Player ${p.gamepadIndex} missing`);
             return;
         }
-        if (pl.playerMesh === null || pl.playerMesh === undefined)
-            pl.playerMesh = createPlayerMesh(pl.mainColor)
-        pl.playerMesh.position.set(sequence[pl.gamepadIndex + 1][0], sequence[pl.gamepadIndex + 1][1], 0);
-        pl.playerMesh.rotation.set(0, 0, 0);
-        pl.playerMesh.name = "player" + (pl.gamepadIndex !== null ? pl.gamepadIndex : "");
-        pl.velocity.set(0, 0, 0);
-        pl.lives = 3;
-        pl.score = 0;
-        pl.livesGranted = 0;
-        pl.warpDelay = 0.9; // can't be >= 1
+        if (p.playerMesh === null || p.playerMesh === undefined)
+            p.playerMesh = createPlayerMesh(p.mainColor)
+        p.playerMesh.position.set(
+            (p.gamepadIndex !== null ? sequence[p.gamepadIndex + 1][0] : 0),
+            (p.gamepadIndex !== null ? sequence[p.gamepadIndex + 1][1] : 0), 0);
+        p.playerMesh.rotation.set(0, 0, 0);
+        p.playerMesh.name = "player" + (p.gamepadIndex !== null ? p.gamepadIndex : "");
+        p.velocity.set(0, 0, 0);
+        p.lives = 3;
+        p.score = 0;
+        p.livesGranted = 0;
+        p.warpDelay = 0.9; // can't be >= 1
 
-        const pg = "player" + (pl.gamepadIndex !== null ? pl.gamepadIndex : "");
+        const pg = "player" + (p.gamepadIndex !== null ? p.gamepadIndex : "");
         document.getElementById(pg + "Score").style.display = "flex";
         document.getElementById(pg + "Lives").style.display = "flex";
         //document.getElementById(pg + "Score").style.display = "flex";
         try {
-            const dc = "#" + pl.mainColor.getHexString();
+            const dc = "#" + p.mainColor.getHexString();
             document.getElementById(pg + "Lives").style.color = dc;
             document.getElementById(pg + "Score").style.color = dc;
         } catch (e) {
@@ -60,7 +72,7 @@ function setupPlayer(pl) {
             document.getElementById(pg + "Score").style.color = "#00FF00";
         }
 
-        if (scene !== undefined) scene.add(pl.playerMesh);
+        if (scene !== undefined) scene.add(p.playerMesh);
         updateScoreDisplay();
         updateLivesDisplay();
     } else {
@@ -68,39 +80,42 @@ function setupPlayer(pl) {
     }
 }
 
-// Function to handle gamepad input
+/**
+ * Handle gamepad input.
+ * @param {number} delta - The time elapsed since the last frame.
+ */
 function handleGamepadInput(delta) {
-    players.forEach((cPlayer) => {
-        const playerGPI = cPlayer.gamepadIndex;
+    players.forEach((p) => {
+        const playerGPI = p.gamepadIndex;
         const gamepad = navigator.getGamepads()[playerGPI];
         if (gamepad) {
             const isFireButtonPressed = gamepad.buttons[0].pressed;
             const isMenuButtonPressed = gamepad.buttons[9].pressed; //  use `start` key
-            const elapsedTime = cPlayer.shotClock.getElapsedTime();
+            const elapsedTime = p.shotClock.getElapsedTime();
 
             if (startScreen || endScreen) {
-                if (cPlayer.ready && elapsedTime > 1 && isFireButtonPressed) {
+                if (p.ready && elapsedTime > 1 && isFireButtonPressed) {
                     if (startScreen) {
                         startGame();
                     } else if (endScreen) {
                         restartGame();
                     }
                     return;
-                } else if (!cPlayer.ready && isMenuButtonPressed && elapsedTime > 1) {
+                } else if (!p.ready && isMenuButtonPressed && elapsedTime > 1) {
                     playSound(readySound);
-                    cPlayer.ready = true;
-                    cPlayer.shotClock.start();
+                    p.ready = true;
+                    p.shotClock.start();
                     document.getElementById("player" + playerGPI).innerText = "Player " + (playerGPI + 1) + " Ready";
                     document.getElementById("player" + playerGPI).style.color = "green";
                 }
                 return;
             }
-            if ((!startScreen || !endScreen) && !cPlayer.ready && isMenuButtonPressed) {
-                cPlayer.ready = true;
+            if ((!startScreen || !endScreen) && !p.ready && isMenuButtonPressed) {
+                p.ready = true;
                 playSound(readySound);
-                setupPlayer(cPlayer);
+                setupPlayer(p);
             }
-            if (startScreen || endScreen || !cPlayer.ready) return;
+            if (startScreen || endScreen || !p.ready) return;
 
             const isWarpButtonPressed = gamepad.buttons[1].pressed;
             const isUpPressed = gamepad.buttons[12].pressed;
@@ -110,35 +125,35 @@ function handleGamepadInput(delta) {
 
             if (isWarpButtonPressed && !keysPressed['gamepadWarp' + playerGPI]) {
                 keysPressed['gamepadWarp' + playerGPI] = true;
-                if (cPlayer.warpDelay >= 1) warpPlayer(cPlayer);
+                if (p.warpDelay >= 1) warpPlayer(p);
             } else if (!isWarpButtonPressed) {
                 keysPressed['gamepadWarp' + playerGPI] = false;
             }
 
             if (isFireButtonPressed) {
                 keysPressed['gamepadFire' + playerGPI] = true;
-                shoot(cPlayer);
+                shoot(p);
             } else if (!isFireButtonPressed) {
                 keysPressed['gamepadFire' + playerGPI] = false;
             }
 
             if (isDownPressed) {
                 keysPressed['gamepadDown' + playerGPI] = true;
-                cPlayer.velocity.multiplyScalar(0.95)
+                p.velocity.multiplyScalar(0.95)
             } else if (!isDownPressed) {
                 keysPressed['gamepadDown' + playerGPI] = false;
             }
 
             if (isLeftPressed) {
                 keysPressed['gamepadLeft' + playerGPI] = true;
-                cPlayer.playerMesh.rotation.z += cPlayer.rotationSpeed;
+                p.playerMesh.rotation.z += p.rotationSpeed;
             } else if (!isLeftPressed) {
                 keysPressed['gamepadLeft' + playerGPI] = false;
             }
 
             if (isRightPressed) {
                 keysPressed['gamepadRight' + playerGPI] = true;
-                cPlayer.playerMesh.rotation.z -= cPlayer.rotationSpeed;
+                p.playerMesh.rotation.z -= p.rotationSpeed;
             } else if (!isRightPressed) {
                 keysPressed['gamepadRight' + playerGPI] = false;
             }
@@ -150,16 +165,16 @@ function handleGamepadInput(delta) {
             if (axisY < -0.1 || isUpPressed) { // Up for acceleration
                 keysPressed['gamepadUp' + playerGPI] = true;
                 const accelerationFactor = isUpPressed ? 1 : -axisY; // stick value or gamepad up
-                cPlayer.velocity.x -= accelerationFactor * cPlayer.acceleration * Math.sin(cPlayer.playerMesh.rotation.z);
-                cPlayer.velocity.y += accelerationFactor * cPlayer.acceleration * Math.cos(cPlayer.playerMesh.rotation.z);
-                createThrustTrail(cPlayer);
+                p.velocity.x -= accelerationFactor * p.acceleration * Math.sin(p.playerMesh.rotation.z);
+                p.velocity.y += accelerationFactor * p.acceleration * Math.cos(p.playerMesh.rotation.z);
+                createThrustTrail(p);
             } else {
                 keysPressed['gamepadUp' + playerGPI] = false;
             }
 
             if (axisY > 0.1) { // Down for brakes
                 keysPressed['gamepadDown' + playerGPI] = true;
-                cPlayer.velocity.multiplyScalar(1 - (axisY * 0.05)); // Apply brakes proportional to stick deflection
+                p.velocity.multiplyScalar(1 - (axisY * 0.05)); // Apply brakes proportional to stick deflection
             } else {
                 keysPressed['gamepadDown' + playerGPI] = false;
             }
@@ -167,28 +182,32 @@ function handleGamepadInput(delta) {
             if (Math.abs(axisX) > 0.1) { // Left and right for rotation
                 keysPressed['gamepadLeft' + playerGPI] = axisX < 0;
                 keysPressed['gamepadRight' + playerGPI] = axisX > 0;
-                cPlayer.playerMesh.rotation.z -= axisX * cPlayer.rotationSpeed;
+                p.playerMesh.rotation.z -= axisX * p.rotationSpeed;
             } else {
                 keysPressed['gamepadLeft' + playerGPI] = false;
                 keysPressed['gamepadRight' + playerGPI] = false;
             }
 
             // Update player position based on velocity
-            cPlayer.playerMesh.position.add(cPlayer.velocity);
-            updatePlayerScoreDisplay(playerGPI, cPlayer.score);
-            wrapPosition(cPlayer.playerMesh);
-            if (cPlayer.isInvulnerable) {
-                cPlayer.invulnerableTimePassed += (clock.getDelta() * 100);
-                cPlayer.playerMesh.visible = Math.floor(cPlayer.invulnerableTimePassed / blinkDuration) % 2 === 0;
+            p.playerMesh.position.add(p.velocity);
+            updatePlayerScoreDisplay(playerGPI, p.score);
+            wrapPosition(p.playerMesh);
+            if (p.isInvulnerable) {
+                p.invulnerableTimePassed += (clock.getDelta() * 100);
+                p.playerMesh.visible = Math.floor(p.invulnerableTimePassed / blinkDuration) % 2 === 0;
             }
-            if (cPlayer.warpDelay <= 1) {
-                cPlayer.playerMesh.visible = Math.floor(cPlayer.warpDelay / blinkDuration) % 2 === 0;
+            if (p.warpDelay <= 1) {
+                p.playerMesh.visible = Math.floor(p.warpDelay / blinkDuration) % 2 === 0;
             }
-            cPlayer.warpDelay += delta;
+            p.warpDelay += delta;
         }
     });
 }
 
+/**
+ * Update the keyboard player's actions based on input.
+ * @param {number} delta - The time elapsed since the last frame.
+ */
 function updateKBPlayer(delta) {
     const elapsedTime = player.shotClock.getElapsedTime();
     if ((startScreen || endScreen)) {
