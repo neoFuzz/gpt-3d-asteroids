@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <title>GPT 3D Asteroids Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./a3d-style.css">
+</head>
+<body>
+<div id="hud" class="hud">
+    <div>
+        <div id="playerScore" class="scoreDisplay"></div>
+        <div id="playerLives" class="livesDisplay"></div>
+    </div>
+    <div>
+        <div id="player0Score" class="scoreDisplay"></div>
+        <div id="player0Lives" class="livesDisplay"></div>
+    </div>
+    <div>
+        <div id="player1Score" class="scoreDisplay"></div>
+        <div id="player1Lives" class="livesDisplay"></div>
+    </div>
+    <div>
+        <div id="player2Score" class="scoreDisplay"></div>
+        <div id="player2Lives" class="livesDisplay"></div>
+    </div>
+    <div>
+        <div id="player3Score" class="scoreDisplay"></div>
+        <div id="player3Lives" class="livesDisplay"></div>
+    </div>
+</div>
+<div id="debug" style="display: none">
+    <div id="dbgInvul"></div>
+    <div id="dbgMisc"></div>
+    <div id="fps"></div>
+</div>
+
+<!-- Start Screen -->
+<div id="startScreen">
+    <h1 style="font-size: xxx-large;">GPT 3D Asteroids</h1>
+    <p>
+        Shoot asteroids to score points. Additional Life granted every 10,000 points.
+    </p>
+    <p>Keyboard controls:</p>
+    <ul>
+        <li><b>Up:</b> Fire thrusters</li>
+        <li><b>Down:</b> Velocity dampening</li>
+        <li><b>Left:</b> rotate counter-clockwise</li>
+        <li><b>Right:</b> rotate clockwise</li>
+        <li><b>Space:</b> Fire bullets</li>
+        <li><b>CRTL:</b> warp to a random location on screen</li>
+    </ul>
+    <p>Gamepad controls:</p>
+    <ul>
+        <li><b>Up:</b> Fire thrusters</li>
+        <li><b>Down:</b> Velocity dampening</li>
+        <li><b>Left:</b> Rotate counter-clockwise</li>
+        <li><b>Right:</b> Rotate clockwise</li>
+        <li><b>Button 1(A):</b> Fire bullets</li>
+        <li><b>Button 2(B):</b> warp to a random location on screen</li>
+    </ul>
+    <p>Press 'Start' or 'Enter' to ready and 'Fire' to start.<br>There are a few secrets to discover, can you find them?</p>
+    <button title="StartGame" onclick="startGame()">Start Game</button>
+</div>
+<!-- Game Over Screen -->
+<div id="gameOverScreen"
+     style="position: absolute; width: 100%; height: 100%; background: black; color: white; justify-content: center; align-items: center; flex-direction: column; display: none;">
+    <div id="goPanel">
+        <p id="finalScore"></p>
+        <button title="Restart" onclick="restartGame()">Restart</button>
+    </div>
+</div>
+<!-- Player Ready display -->
+<div id="playerStatus" class="hud" style="display: none;font-family: 'Exo 2',sans-serif;">
+    <div>
+        <div id="player" class="scoreDisplay">Player KB Status:</div>
+    </div>
+    <div>
+        <div id="player0" class="scoreDisplay">Player 1 Status:</div>
+    </div>
+    <div>
+        <div id="player1" class="scoreDisplay">Player 2 Status:</div>
+    </div>
+    <div>
+        <div id="player2" class="scoreDisplay">Player 3 Status:</div>
+    </div>
+    <div>
+        <div id="player3" class="scoreDisplay">Player 4 Status:</div>
+    </div>
+</div>
+<!-- Scripts --->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tone"></script>
+<script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.4.0"></script>
+<midi-player src="MegaMan2-MetalManStage.mid" sound-font style="display: none"></midi-player>
+<script src="InvulnerablePhase.js"></script>
+<script src="Particles.js"></script>
+<script src="Player.js"></script>
+<script src="Saucer.js"></script>
+<script src="a3d.js"></script>
+</body>
+</html>
