@@ -937,7 +937,7 @@ function checkBulletAsteroidCollisions() {
  */
 function pickRandomPlayer() {
     // Combine the player object with the values from the Map
-    const allPlayers = [player, ...players.values().filter(player => player.ready === true)];
+    const allPlayers = [player, ...Array.from(players.values()).filter(player => player.ready === true)];
 
     // If the map is empty, default to the player
     if (players.size === 0) {
